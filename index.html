@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encoders de Posición</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Arial,sans-serif; }
+  body { background:#fdf6f0; color:#333; line-height:1.6; }
+  header { background:#a8d8ea; text-align:center; padding:50px 20px; border-radius:0 0 30px 30px; }
+  header h1 { font-size:2.5em; }
+  header p { font-size:1.2em; margin-top:10px; }
+  .badge { display:inline-block; background:#ffd6de; padding:4px 14px; border-radius:20px; margin-top:12px; font-size:.9em; }
+  section { max-width:900px; margin:40px auto; padding:0 20px; }
+  h2 { color:#5a7d9a; border-bottom:3px solid #c9f2c9; display:inline-block; padding-bottom:4px; margin-bottom:20px; }
+  .caja { background:#fff; border-radius:16px; padding:25px; box-shadow:0 3px 10px rgba(0,0,0,.08); margin-bottom:20px; }
+  .analogia { background:#fff3b0; border-left:6px solid #f0c929; }
+
+  /* TABS tipos */
+  .tabs { display:flex; gap:10px; margin-bottom:0; }
+  .tab-btn { flex:1; padding:14px; border:none; border-radius:12px 12px 0 0; cursor:pointer; font-size:1.05em; font-weight:bold; background:#e8e8e8; }
+  .tab-btn.activa { background:#c9f2c9; }
+  .tab-cont { display:none; background:#fff; padding:25px; border-radius:0 0 16px 16px; box-shadow:0 3px 10px rgba(0,0,0,.08); }
+  .tab-cont.activa { display:block; }
+  table { width:100%; border-collapse:collapse; margin-top:10px; }
+  th, td { padding:10px; border:1px solid #ddd; text-align:center; }
+  th { background:#c9f2c9; }
+
+  /* Pasos */
+  .paso { display:flex; align-items:center; gap:15px; margin:12px 0; }
+  .num { background:#a8d8ea; min-width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:1.1em; }
+
+  /* Flip cards */
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; }
+  .flip { perspective:1000px; height:170px; cursor:pointer; }
+  .flip-inner { position:relative; width:100%; height:100%; transition:transform .6s; transform-style:preserve-3d; }
+  .flip.volteada .flip-inner { transform:rotateY(180deg); }
+  .cara, .atras { position:absolute; width:100%; height:100%; backface-visibility:hidden; border-radius:14px; display:flex; align-items:center; justify-content:center; padding:15px; text-align:center; }
+  .cara { background:#ffd6de; font-weight:bold; font-size:1.15em; }
+  .atras { background:#fff3b0; transform:rotateY(180deg); font-size:.95em; }
+
+  /* Quiz */
+  .pregunta { margin-bottom:25px; }
+  .op { display:block; width:100%; text-align:left; margin:6px 0; padding:12px 15px; border-radius:10px; border:2px solid #ddd; background:#fff; cursor:pointer; font-size:1em; }
+  .op:hover { border-color:#a8d8ea; }
+  .op.bien { background:#c9f2c9; border-color:#4caf50; }
+  .op.mal { background:#ffd6de; border-color:#e57373; }
+  #resultado { font-size:1.2em; font-weight:bold; text-align:center; margin-top:10px; }
+
+  pre { background:#2d2d2d; color:#c9f2c9; padding:18px; border-radius:12px; overflow-x:auto; font-size:.85em; }
+  footer { text-align:center; background:#a8d8ea; padding:25px; margin-top:50px; border-radius:30px 30px 0 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔄 Encoders de Posición</h1>
+  <p>El sensor que le enseña a las máquinas <b>dónde están</b></p>
+  <span class="badge">Página interactiva · haz clic en todo 👇</span>
+</header>
+
+<section>
+  <h2>¿Qué es un encoder?</h2>
+  <div class="caja">
+    <p>Un <b>encoder</b> es un sensor que <b>convierte una posición</b> (angular o lineal)
+    <b>en una señal digital</b>. Así, un microcontrolador puede saber
+    <b>cuánto se movió algo y en qué dirección</b>.</p>
+    <p style="margin-top:10px">Es una <b>entrada</b> del sistema: el mundo físico (giro) → información digital (pulsos o códigos).</p>
+  </div>
+  <div class="caja analogia">💡 <b>Analogía:</b> el encoder incremental es como contar pasos: sabes cuántos diste, pero si te caes tienes que regresar al inicio. El absoluto es como un GPS: siempre sabe dónde estás.</div>
+</section>
+
+<section>
+  <h2>Tipos de encoder (da clic 👆)</h2>
+  <div class="tabs">
+    <button class="tab-btn activa" onclick="verTab(0)">Incremental</button>
+    <button class="tab-btn" onclick="verTab(1)">Absoluto</button>
+  </div>
+  <div class="tab-cont activa">
+    <p><b>Entrega pulsos</b> cada vez que el eje gira, y el sistema los <b>cuenta</b>.</p>
+    <ul style="margin:10px 0 10px 20px">
+      <li>Usa <b>2 canales (A y B) desfasados 90°</b> (cuadratura) para saber la <b>dirección</b> del giro.</li>
+      <li>Se mide en <b>PPR</b> (pulsos por revolución).</li>
+      <li>⚠️ Al apagarse <b>olvida</b> la posición: necesita un punto de referencia.</li>
+    </ul>
+    <table>
+      <tr><th>Costo</th><th>Precisión</th><th>Ejemplos</th></tr>
+      <tr><td>💰 Barato</td><td>Alta</td><td>Perilla de volumen, rueda del mouse, KY-040 de Arduino</td></tr>
+    </table>
+  </div>
+  <div class="tab-cont">
+    <p><b>Entrega un código único</b> para cada posición. Cada punto del giro tiene su propio valor binario.</p>
+    <ul style="margin:10px 0 10px 20px">
+      <li>✅ <b>Recuerda la posición</b> aunque se apague.</li>
+      <li>Su resolución se mide en <b>bits</b>: 10 bits = 2¹⁰ = 1024 posiciones.</li>
+      <li>Usa más sensores y un disco con patrón binario (código Gray).</li>
+    </ul>
+    <table>
+      <tr><th>Costo</th><th>Precisión</th><th>Ejemplos</th></tr>
+      <tr><td>💸 Caro</td><td>Muy alta</td><td>Brazos robóticos, antenas satelitales, CNC</td></tr>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>¿Cómo funciona uno óptico?</h2>
+  <div class="caja">
+    <div class="paso"><div class="num">1</div><p>Un <b>disco con ranuras</b> gira junto al eje.</p></div>
+    <div class="paso"><div class="num">2</div><p>Un <b>LED</b> apunta hacia el disco.</p></div>
+    <div class="paso"><div class="num">3</div><p>Las ranuras <b>dejan pasar o bloquean la luz</b> al girar.</p></div>
+    <div class="paso"><div class="num">4</div><p>Un <b>fotodetector</b> convierte los destellos en <b>pulsos eléctricos</b>.</p></div>
+    <div class="paso"><div class="num">5</div><p>El microcontrolador <b>cuenta los pulsos</b> = cuánto giró. Con los canales A y B sabe <b>hacia dónde</b>.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>Aplicaciones (voltea las tarjetas 🃏)</h2>
+  <div class="cards">
+    <div class="flip" onclick="voltear(this)"><div class="flip-inner">
+      <div class="cara">🖱️ Rueda del mouse</div>
+      <div class="atras">Un encoder incremental detecta el giro de la rueda de scroll.</div>
+    </div></div>
+    <div class="flip" onclick="voltear(this)"><div class="flip-inner">
+      <div class="cara">🤖 Robótica</div>
+      <div class="atras">Cada articulación usa un encoder absoluto para saber su posición exacta.</div>
+    </div></div>
+    <div class="flip" onclick="voltear(this)"><div class="flip-inner">
+      <div class="cara">🖨️ Impresoras 3D y CNC</div>
+      <div class="atras">Controlan la posición precisa de los ejes de movimiento.</div>
+    </div></div>
+    <div class="flip" onclick="voltear(this)"><div class="flip-inner">
+      <div class="cara">🔊 Perillas de audio</div>
+      <div class="atras">Girar una perilla digital de volumen es usar un encoder incremental.</div>
+    </div></div>
+  </div>
+</section>
+
+<section>
+  <h2>Prueba lo que aprendiste 🧠</h2>
+  <div class="caja">
+    <div class="pregunta">
+      <p><b>1. ¿Qué encoder recuerda su posición al apagarse?</b></p>
+      <button class="op" onclick="resp(this,0)">Incremental</button>
+      <button class="op" data-bien="1" onclick="resp(this,0)">Absoluto</button>
+    </div>
+    <div class="pregunta">
+      <p><b>2. ¿Para qué sirven los canales A y B desfasados 90°?</b></p>
+      <button class="op" onclick="resp(this,1)">Para dar más brillo al LED</button>
+      <button class="op" data-bien="1" onclick="resp(this,1)">Para saber la dirección del giro</button>
+      <button class="op" onclick="resp(this,1)">Para alimentar el sensor</button>
+    </div>
+    <div class="pregunta">
+      <p><b>3. Un encoder de 10 bits tiene…</b></p>
+      <button class="op" data-bien="1" onclick="resp(this,2)">1024 posiciones</button>
+      <button class="op" onclick="resp(this,2)">10 posiciones</button>
+      <button class="op" onclick="resp(this,2)">1000 vueltas</button>
+    </div>
+    <p id="resultado"></p>
+  </div>
+</section>
+
+<section>
+  <h2>Ejemplo en Arduino (KY-040)</h2>
+  <div class="caja">
+    <pre>// Encoder rotatorio KY-040: cuenta posiciones del giro
+int contador = 0;
+int ultimoCLK;
+
+void setup() {
+  pinMode(2, INPUT);  // CLK (canal A)
+  pinMode(3, INPUT);  // DT  (canal B)
+  Serial.begin(9600);
+  ultimoCLK = digitalRead(2);
+}
+
+void loop() {
+  int clk = digitalRead(2);
+  if (clk != ultimoCLK && clk == HIGH) {      // flanco de subida
+    if (digitalRead(3) != clk) contador++;    // DT distinto = giro horario
+    else                       contador--;    // giro antihorario
+    Serial.println(contador);
+  }
+  ultimoCLK = clk;
+}</pre>
+    <p style="margin-top:10px"><b>Conexiones:</b> CLK→2, DT→3, +→5V, GND→GND. Abre el Monitor Serial y gira el encoder: verás el contador subir y bajar. 🔄</p>
+  </div>
+</section>
+
+<footer>
+  <p><b>Encoders de Posición</b> · Página web informativa e interactiva</p>
+  <p>Tu Nombre · Materia · 2025</p>
+</footer>
+
+<script>
+function verTab(n){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('activa',i===n));
+  document.querySelectorAll('.tab-cont').forEach((c,i)=>c.classList.toggle('activa',i===n));
+}
+function voltear(el){ el.classList.toggle('volteada'); }
+let aciertos = 0, respondidas = new Set();
+function resp(btn, p){
+  if (respondidas.has(p)) return;
+  respondidas.add(p);
+  const ops = btn.parentElement.querySelectorAll('.op');
+  ops.forEach(o=>{ o.disabled = true; if(o.dataset.bien) o.classList.add('bien'); });
+  if (!btn.dataset.bien) btn.classList.add('mal'); else aciertos++;
+  if (respondidas.size === 3){
+    document.getElementById('resultado').textContent =
+      "🎉 Obtuviste " + aciertos + " de 3 correctas";
+  }
+}
+</script>
+</body>
+</html>
